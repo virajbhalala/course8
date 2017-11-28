@@ -1,0 +1,112 @@
+---
+title: "CourseProj"
+author: "Viraj Bhalala"
+date: "11/27/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Machine Learning Course Project Writeup
+Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+Data
+
+The training data for this project are available here: [https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv]
+
+The test data are available here: [https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv]
+
+The data for this project come from this source: [http://groupware.les.inf.puc-rio.br/har]. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+
+What you should submit
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+Peer Review Portion
+
+Your submission for the Peer Review portion should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
+
+Approach
+```{r cars}
+library(lattice); 
+library(ggplot2); 
+library(caret); 
+library(randomForest); 
+library(rpart); 
+library(rpart.plot)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r load}
+set.seed(1234)
+
+# data load and clean up
+trainingset <- read.csv("pml-training.csv", na.strings=c("NA","#DIV/0!", ""))
+testingset <- read.csv("pml-testing.csv", na.strings=c("NA","#DIV/0!", ""))
+
+```
+
+```{r view data}
+
+head(trainingset)
+head(testingset)
+```
+
+Clean dataset
+```{r delete na}
+trainingset<-trainingset[,colSums(is.na(trainingset)) == 0]
+testingset <-testingset[,colSums(is.na(testingset)) == 0]
+names(trainingset)
+names(testingset)
+
+#delete irrelavent columns
+trainingset   <-trainingset[,-c(1:7)]
+testingset <-testingset[,-c(1:7)]
+
+# partition the data 70-30 train test spliy
+traintrainset <- createDataPartition(y=trainingset$classe, p=0.70, list=FALSE)
+TrainTrainingSet <- trainingset[traintrainset, ] 
+TestTrainingSet <- trainingset[-traintrainset, ]
+```
+Using Precission Trees
+
+```{r predict}
+modelDT <- rpart(classe ~ ., data=TrainTrainingSet, method="class")
+
+predictionDT <- predict(modelDT, TestTrainingSet, type = "class")
+rpart.plot(modelDT, main="Classification Tree", extra=102, under=TRUE, faclen=0)
+confusionMatrix(predictionDT, TestTrainingSet$classe)
+
+
+```
+Using Random Forest
+
+```{r Random Forest}
+modelRF <- randomForest(classe ~. , data=TrainTrainingSet, method="class")
+
+predictionRF <- predict(modelRF, TestTrainingSet, type = "class")
+confusionMatrix(predictionRF, TestTrainingSet$class)
+
+```
+
+Conclusion
+
+Random forest performed better than decission trees with 0.9913 vs 0.6882 test traing set accuracy
+
+```{r predict vals}
+
+predictfinal <- predict(modelRF, testingset, type="class")
+predictfinal
+```
+
+
+
+
